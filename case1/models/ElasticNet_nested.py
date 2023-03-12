@@ -48,8 +48,8 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
     kf2 = KFold(n_splits=CV_inner, random_state=42, shuffle=True)
     
     # Define hyper parameter space
-    alphas = np.linspace(0, 1, 5)
-    lambdas = np.logspace(-1, 1, 20)
+    alphas = np.linspace(0, 1, 20)
+    lambdas = np.logspace(-3, 1, 20)
 
 
     # Prepare memory storage
@@ -92,7 +92,9 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
                     Err_val[j, a_idx, l_idx] = np.sqrt(((y_val - y_hat_val)**2).mean())
 
     # Select optimal hyperparameter
-    alpha_opt, lambda_opt = np.where(Err_val.mean(axis=0) == np.min(Err_val.mean(axis=0)))
+    alpha_opt_idx, lambda_opt_idx = np.where(Err_val.mean(axis=0) == np.min(Err_val.mean(axis=0)))
+    alpha_opt = alphas[alpha_opt_idx]
+    lambda_opt = lambdas[lambda_opt_idx]
 
     ############
     # NOT SURE ABOUT THE FOLLOWING!
@@ -136,14 +138,14 @@ E_gen = Err_test.mean()
 # Results:
 print('Computed estimated test error E_test[i]: ', Err_test)
 print('')
-print('Correspondind optimal hyperparamter p*: ', alpha_opts, lambda_opts)
+print('Correspondind optimal hyperparamter (alpha*, lambda*): ', list(zip(alpha_opts, lambda_opts)))
 print('')
 print('Estimated generalization error: ')
 print(E_gen)
 
 #fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5), dpi=100)
 
-#ax1.plot(K, Err_tr.T, ':', alpha=0.5)
+#ax1.plot(len(alphas), Err_tr.T, ':', alpha=0.5)
 #ax1.plot(Err_tr.mean(axis=0), c='k', label='Average training error', linewidth=1.5)
 #ax1.set_title('Training error for each fold')
 #ax1.legend()
