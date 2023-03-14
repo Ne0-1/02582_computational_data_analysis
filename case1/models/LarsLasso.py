@@ -8,6 +8,7 @@ from sklearn.model_selection import KFold
 from sklearn.linear_model import Lars
 
 #TODO: Maybe change to nested cross-validation
+#TODO: All methods should be evaluated on the same splits!
 
 def setup_mpl():
     mpl.rcParams['font.family'] = 'Times New Roman'
@@ -26,7 +27,7 @@ CV = 5
 kf = KFold(n_splits=CV)
  
 stop = n-math.ceil(n/CV)
-K = range(stop)
+K = range(stop)  # TODO: assert this part, why do we use this appraoch?
 
 Err_tr = np.zeros((CV,len(K)))
 Err_val = np.zeros((CV, len(K)))

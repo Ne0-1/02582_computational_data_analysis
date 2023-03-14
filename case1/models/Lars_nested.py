@@ -19,14 +19,12 @@ def setup_mpl():
 y = np.loadtxt('case1/data/response.txt')
 X = np.loadtxt('case1/data/independent.txt')
 
-#Temp NaN solution, replace nan with column mean
-X = np.where(np.isnan(X), np.ma.array(X, mask=np.isnan(X)).mean(axis=0), X) 
 
 (n, p) = X.shape
 
 # Define outer cross validation split
 CV_outer = 10
-CV_inner = 10
+CV_inner = 5
 kf1 = KFold(n_splits=CV_outer, random_state=42, shuffle=True)
 
 Err_par = np.zeros(CV_outer)
@@ -56,21 +54,26 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
     # Inner cross-validation loop - select optimal model
     for j, (inner_train_index, inner_test_index) in enumerate(kf2.split(X_par)):
             
-        # Center data, notice test is centered using training mean
-        y_train, mu = centerData(y_par[inner_train_index])
-        y_val = y_par[inner_test_index] - mu
+        X_train = X_par[inner_train_index, :]
+        y_train = y_par[inner_train_index]
 
-        X_train, mu = centerData(X_par[inner_train_index, :])
-        X_val = X_par[inner_test_index,:] - mu
+        X_val = X_par[inner_test_index, :]
+        y_val = y_par[inner_test_index]
+
+        # Imputing missing values
+        X_train = np.where(np.isnan(X_train), np.ma.array(X_train, mask=np.isnan(X_train)).mean(axis=0), X_train)
+        X_val = np.where(np.isnan(X_val), np.ma.array(X_val, mask=np.isnan(X_val)).mean(axis=0), X_val)
+            
+        # Center data, notice test is centered using training mean
+        y_train, mu = centerData(y_train)
+        y_val = y_val - mu
+
+        X_train, mu = centerData(X_train)
+        X_val = X_val - mu
 
         # Normalize val using train
         X_train, d = normalize(X_train)
         X_val = X_val / d
-        
-        ## I think we should normalize y_train + y_val even though this is not done in the exercises
-        d = np.linalg.norm(y_train, axis=0, ord=2) 
-        y_train = y_train / d
-        y_val = y_val / d
 
         for p in K:
             model_inner = Lars(n_nonzero_coefs=p, fit_path = False, fit_intercept = False)
@@ -88,8 +91,10 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
     # Select optimal hyperparameter
     p_opt = np.argmin(Err_val.mean(axis=0))
 
-    ############
-    # NOT SURE ABOUT THE FOLLOWING!
+    # Imputing missing values
+    X_par = np.where(np.isnan(X_par), np.ma.array(X_par, mask=np.isnan(X_par)).mean(axis=0), X_par)
+    X_test = np.where(np.isnan(X_test), np.ma.array(X_test, mask=np.isnan(X_test)).mean(axis=0), X_test)
+
     # Center data, notice test is centered using training mean
     y_par, mu = centerData(y_par)
     y_test = y_test - mu
@@ -100,12 +105,6 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
     # Normalize val using train
     X_par, d = normalize(X_par)
     X_test = X_test / d
-    
-    # I think we should normalize even though this is not done in the exercises (Maybe the coeffs will handle it if we don't?)
-    d = np.linalg.norm(y_par, axis=0, ord=2) 
-    y_par = y_par / d
-    y_test = y_test / d
-    ###############
 
     # Train optimal model
     model_outer = Lars(n_nonzero_coefs=p_opt, fit_path = False, fit_intercept = False)
@@ -144,7 +143,7 @@ ax1.set_ylabel('RMSE')
 ax2.plot(K, Err_val.T, ':', alpha=0.5)
 ax2.plot(Err_val.mean(axis=0), c='k', label='Average training error', linewidth=1.5)
 #ax2.axvline(p_opt, label=r"$p^{*}$", linestyle='dashed', c='k', alpha=0.75)
-[ax.axvline(_x, linewidth=1, color='k', linestyle='dashed', alpha=0.75) for _x in p_opts]
+#[ax.axvline(_x, linewidth=1, color='k', linestyle='dashed', alpha=0.75) for _x in p_opts]
 ax2.set_title('Validation error for each fold')
 ax2.set_yscale('log')
 ax2.legend()
