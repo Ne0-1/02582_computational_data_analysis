@@ -18,14 +18,14 @@ def setup_mpl():
     return None
 
 # Reading response and independent variablescase1/data/response.txt
-y = np.loadtxt('case1/data/response.txt')
-X = np.loadtxt('case1/data/independent.txt')
+y = np.loadtxt('../case1/data/response.txt')
+X = np.loadtxt('../case1/data/independent.txt')
 
 (n, p) = X.shape
 
 # Define outer cross validation split
 CV_outer = 10
-CV_inner = 5
+CV_inner = 10
 kf1 = KFold(n_splits=CV_outer, random_state=42, shuffle=True)
 
 Err_par = np.zeros(CV_outer)
@@ -47,7 +47,7 @@ for i, (outer_train_index, outer_test_index) in tqdm(enumerate(kf1.split(X))):
     
     # Define hyper parameter space
     alphas = np.arange(0, 1, 0.01)
-    lambdas = np.logspace(-5, 100)
+    lambdas = np.logspace(-5, 1)
 
 
     # Prepare memory storage

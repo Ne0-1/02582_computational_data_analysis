@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from functions import normalize, centerData
 from sklearn.model_selection import KFold
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Lasso
 
 # Sources for approach
 # https://stats.stackexchange.com/questions/254612/how-to-obtain-optimal-hyperparameters-after-nested-cross-validation
@@ -27,7 +27,6 @@ CV_inner = 10
 kf1 = KFold(n_splits=CV_outer, random_state=42, shuffle=True)
 
 all_betas = np.zeros((p, 10))
-
 Err_par = np.zeros(CV_outer)
 Err_test = np.zeros(CV_outer)
 lambda_opts = np.zeros(CV_outer)
@@ -45,7 +44,7 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
     kf2 = KFold(n_splits=CV_inner, random_state=42, shuffle=True)
     
     # Define hyper parameter space
-    lambdas = np.logspace(-5, 1, num=50)
+    lambdas = np.logspace(-5, 1)
 
     # Prepare memory storage
     Err_tr = np.zeros((CV_inner, len(lambdas)))
@@ -53,7 +52,7 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
 
     # Inner cross-validation loop - select optimal model
     for j, (inner_train_index, inner_test_index) in enumerate(kf2.split(X_par)):
-        
+
         X_train = X_par[inner_train_index, :]
         y_train = y_par[inner_train_index]
 
@@ -74,9 +73,10 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
         # Normalize val using train
         X_train, d = normalize(X_train)
         X_val = X_val / d
+        
 
         for lambda_idx, lambda_ in enumerate(lambdas):
-            model_inner = Ridge(alpha=lambda_, fit_intercept = False, tol=1e-4)
+            model_inner = Lasso(alpha=lambda_, fit_intercept = False, tol=1e-2)
             model_inner.fit(X_train, y_train)
             
             # Training predictions
@@ -90,14 +90,6 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
 
     # Select optimal hyperparameter
     lambda_opt = lambdas[np.argmin(Err_val.mean(axis=0))]
-
-    # Trying 1st error rule
-    #seErr_val = np.std(Err_val, axis = 0) / np.sqrt(CV_inner)
-    #J = np.where(Err_val.mean(axis=0)[np.argmin(Err_val.mean(axis=0))] + seErr_val[np.argmin(Err_val.mean(axis=0))] > Err_val.mean(axis=0))[0]
-    #j = int(J[-1:])
-    #Lambda_CV_1StdRule = lambdas[j]
-    #temp 
-    #lambda_opt = Lambda_CV_1StdRule
 
     # Imputing missing values
     X_par = np.where(np.isnan(X_par), np.ma.array(X_par, mask=np.isnan(X_par)).mean(axis=0), X_par)
@@ -113,15 +105,9 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
     # Normalize val using train
     X_par, d = normalize(X_par)
     X_test = X_test / d
-    
-    # I think we should normalize even though this is not done in the exercises (Maybe the coeffs will handle it if we don't?)
-    #d = np.linalg.norm(y_par, axis=0, ord=2) 
-    #y_par = y_par / d
-    #y_test = y_test / d
-    ###############
 
     # Train optimal model
-    model_outer = Ridge(alpha=lambda_opt, fit_intercept = False)
+    model_outer = Lasso(alpha=lambda_opt, fit_intercept = False, tol=1e-4)
     model_outer.fit(X_par, y_par)
     
     # Training predictions
@@ -134,9 +120,8 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
     Err_test[i] = np.sqrt(((y_test - y_hat_test)**2).mean())
     lambda_opts[i] = lambda_opt
 
-    # For sparsity checking
+    # For visualising sparsity of coefficient estimates
     all_betas[:, i] = beta_outer
-
 
 fig, ax = plt.subplots(figsize=(10,10), dpi=100)
 shw = ax.imshow(np.abs(all_betas), aspect='auto', interpolation='none')
@@ -145,19 +130,19 @@ bar.set_label(r"$|\beta_{i}|$", fontsize=18)
 # Fixing grid lines
 ax.set_xticks(np.arange(0, 10, 1), fontsize=14)
 ax.set_yticks(np.arange(0, p, 1), fontsize=14)
-ax.set_xticklabels(np.arange(1, 11, 1))
-ax.set_yticklabels(np.arange(1, p+1, 1))
+ax.set_xticklabels(np.arange(1, 11, 1), fontsize=14)
+ax.set_yticklabels(np.arange(1, p+1, 1), fontsize=14)
 ax.set_xticks(np.arange(-.5, 10, 1), minor=True)
 ax.set_yticks(np.arange(-.5, p, 1), minor=True)
 ymin, ymax = ax.get_ylim()
-ax.set_yticks(np.arange(0, p, 10), fontsize=14)
-ax.set_yticklabels(np.arange(0, p, 10), fontsize=14)
+ax.set_yticks(np.arange(0, p, 10))
+ax.set_yticklabels(np.arange(0, p, 10))
 ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
 ax.grid(which='minor', color='k', linestyle='-', linewidth=1)
 ax.tick_params(which='minor', bottom=False, left=False)
 ax.set_xlabel('$\mathcal{M}^{*}_{i}$', fontsize=18)
 ax.set_ylabel(r"$\beta_{i}$", fontsize=18)
-plt.savefig('coeffs_ridge.png', dpi=100)
+plt.savefig('coeffs_lasso.png', dpi=100)
 plt.show()
 
 # Compute estimate of generalization error
