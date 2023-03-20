@@ -110,8 +110,8 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X, y)):
         X_val = np.hstack([X_val, X_val_cat_encoded])
 
         # Center data, notice test is centered using training mean
-        #y_train, mu = centerData(y_train)
-        #y_val = y_val - mu
+        y_train, mu = centerData(y_train)
+        y_val = y_val - mu
 
         X_train, mu = centerData(X_train)
         X_val = X_val - mu
@@ -127,8 +127,8 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X, y)):
             
             # Training predictions
             beta_inner = model_inner.coef_.ravel()
-            y_hat_train = y_train.mean() +  X_train @ beta_inner  # Don't need intercept due to centered data
-            y_hat_val = y_train.mean() + X_val @ beta_inner      # Don't need intercept due to centered data
+            y_hat_train =  X_train @ beta_inner  # Don't need intercept due to centered data
+            y_hat_val = X_val @ beta_inner      # Don't need intercept due to centered data
 
             # Compute RMSE for train and validation set
             Err_tr[j, lambda_idx] = np.sqrt(((y_train - y_hat_train)**2).mean())
@@ -188,8 +188,8 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X, y)):
     X_test = np.hstack([X_test, X_test_cat_encoded])
 
     # Center data, notice test is centered using training mean
-    #y_par, mu = centerData(y_par)
-    #y_test = y_test - mu
+    y_par, mu = centerData(y_par)
+    y_test = y_test - mu
 
     X_par, mu = centerData(X_par)
     X_test = X_test - mu
@@ -204,8 +204,8 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X, y)):
     
     # Training predictions
     beta_outer = model_outer.coef_.ravel()
-    y_hat_par = y_par.mean() + X_par @ beta_outer  # Adding E[y_par] because model is fitted without intercept
-    y_hat_test = y_par.mean() + X_test @ beta_outer  # Adding E[y_par] because model is fitted without intercept
+    y_hat_par = X_par @ beta_outer  # Adding E[y_par] because model is fitted without intercept
+    y_hat_test = X_test @ beta_outer  # Adding E[y_par] because model is fitted without intercept
 
     # Compute test error
     Err_par[i] = np.sqrt(((y_par - y_hat_par)**2).mean())
@@ -240,6 +240,7 @@ plt.show()
 
 # Compute estimate of generalization error
 E_gen = Err_test.mean()
+np.savetxt('estimatedRMSE_s194266s194244.txt', np.array([E_gen]))
 E_std = np.std(Err_test, ddof=1)
 # Results:
 print('Computed estimated test error E_test[i]: ', Err_test)
