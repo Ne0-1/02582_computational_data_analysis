@@ -17,8 +17,8 @@ def setup_mpl():
     return None
 
 # Reading response and independent variablescase1/data/response.txt
-y = np.loadtxt('../case1/exploratory/response_variable_test.txt')
-X = np.loadtxt('../case1/exploratory/feature_matrix_test.txt')
+y = np.loadtxt('../case1/data/response_variable_y.txt')
+X = np.loadtxt('../case1/data/feature_matrix_X.txt')
 
 
 K = 5  # Hyperparameter for KNN

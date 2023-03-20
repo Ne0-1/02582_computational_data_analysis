@@ -14,8 +14,8 @@ def setup_mpl():
     return None
 
 # Reading response and independent variablescase1/data/response.txt
-y = np.loadtxt('../case1/exploratory/response_variable_test.txt')
-X = np.loadtxt('../case1/exploratory/feature_matrix_test.txt')
+y = np.loadtxt('../case1/data/response_variable_y.txt')
+X = np.loadtxt('../case1/data/feature_matrix_X.txt')
 
 cat_idx = [95, 97, 98, 99]
 K = 5
@@ -81,7 +81,7 @@ ax.set_ylabel('Residuals')
 #plt.show()
 
 # final predictions
-X_new = np.loadtxt('X_new_processed.txt')
+X_new = np.loadtxt('../case1/data/X_new_processed.txt')
 #final_predictions = X_new @ beta_outer # Adding intercept as beta0 = E[y]
 final_predictions = y_mu + model_outer.predict(X_new)
 np.savetxt('predictions_s194266s194244.txt', final_predictions)
