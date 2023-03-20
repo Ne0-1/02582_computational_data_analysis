@@ -1,6 +1,4 @@
 import numpy as np
-import pandas as pd
-import math
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from functions import normalize, centerData
@@ -16,7 +14,7 @@ def setup_mpl():
     return None
 
 # Reading response and independent variablescase1/data/response.txt
-y = np.loadtxt('../case1/data/response.txt')
+y = np.loadtxt('../case1/ex/response.txt')
 X = np.loadtxt('../case1/data/independent.txt')
 
 (n, p) = X.shape
@@ -89,7 +87,14 @@ for i, (outer_train_index, outer_test_index) in enumerate(kf1.split(X)):
             Err_val[j, lambda_idx] = np.sqrt(((y_val - y_hat_val)**2).mean())
 
     # Select optimal hyperparameter
-    lambda_opt = lambdas[np.argmin(Err_val.mean(axis=0))]
+    meanErr_val = Err_val.mean(axis=0)
+    lambda_opt_idx = np.argmin(meanErr_val)
+    lambda_opt = lambdas[lambda_opt_idx]
+
+    # one-std error rule
+    seErr_val = Err_val.std(axis=0) / np.sqrt(CV_inner)
+    J = np.where(meanErr_val[lambda_opt_idx] + seErr_val[lambda_opt_idx] > meanErr_val)[0]
+    Lambda_CV_1StdRule = lambdas[int(J[-1:])]
 
     # Imputing missing values
     X_par = np.where(np.isnan(X_par), np.ma.array(X_par, mask=np.isnan(X_par)).mean(axis=0), X_par)
