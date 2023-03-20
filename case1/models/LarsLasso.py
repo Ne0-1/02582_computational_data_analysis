@@ -24,7 +24,7 @@ X = np.where(np.isnan(X), np.ma.array(X, mask=np.isnan(X)).mean(axis=0), X)
 (n, p) = X.shape
 
 CV = 5
-kf = KFold(n_splits=CV)
+kf = KFold(n_splits=CV, random_state=42, shuffle=True)
  
 stop = n-math.ceil(n/CV)
 K = range(stop)  # TODO: assert this part, why do we use this appraoch?
@@ -58,9 +58,8 @@ for i, (train_index, test_index) in enumerate(kf.split(X)):
         y_hat_train = X_train @ beta
         y_hat_test = X_test @ beta
         
-        # Compute MSE #TODO: should it be relative?
-        Err_tr[i, p] = np.sqrt(((y_train - y_hat_train)**2).mean()) / np.sqrt(((y_train - np.mean(y_train))**2).mean())
-        Err_val[i, p] = np.sqrt(((y_test - y_hat_test)**2).mean()) / np.sqrt(((y_test - np.mean(y_test))**2).mean())
+        Err_tr[i, p] = np.sqrt(((y_train - y_hat_train)**2).mean())
+        Err_val[i, p] = np.sqrt(((y_test - y_hat_test)**2).mean())
 
 
 
@@ -68,7 +67,6 @@ err_tr = np.mean(Err_tr, axis=0) # mean training error over the CV folds
 err_tst = np.mean(Err_val, axis=0) # mean test error over the CV folds
 err_ste = np.std(Err_val, axis=0)/np.sqrt(CV) # Note: we divide with sqrt(n) to get the standard error as opposed to the standard deviation
 p_OP = np.argmin(err_tst) #Best performing p determined by CV.
-
 
 # 1-std rule
 seMSE = np.std(err_tst, axis=0) / np.sqrt(K)
